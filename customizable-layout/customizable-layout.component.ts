@@ -1,5 +1,6 @@
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Inject, Injector, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import * as _ from 'lodash';
 import { BehaviorSubject, combineLatest, fromEvent, Observable, Subscription } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 import { createGuid } from 'src/app/shared/functions/create-guid.fn';
@@ -87,10 +88,50 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   initializeState() {
     let storedLayout = JSON.parse(this.windowRef.localStorage.getItem(this.defaultLayout.name));
     if (isCustomizableLayoutConfig(storedLayout) && this.defaultLayout.version <= storedLayout.version) {
-        this._layoutState.next(storedLayout);
+      //Figure out if there are any new components in the default layout that needs to be added to the stored layout.
+      this.addMissingComponentsToStoredLayout(storedLayout, this.defaultLayout, LayoutType.Mobile);
+      this.addMissingComponentsToStoredLayout(storedLayout, this.defaultLayout, LayoutType.Tablet);
+      this.addMissingComponentsToStoredLayout(storedLayout, this.defaultLayout, LayoutType.Desktop);
+      this._layoutState.next(storedLayout);
     } else {
       this._layoutState.next(this.createCopy(this.defaultLayout));
     }
+  }
+
+  private addMissingComponentsToStoredLayout(storedLayoutConfig: CustomizableLayoutConfig, defaultLayoutConfig: CustomizableLayoutConfig, layoutType: LayoutType) {
+    const storedLayout: CustomizableLayout | undefined = storedLayoutConfig[layoutType];
+    const defaultLayout: CustomizableLayout | undefined = defaultLayoutConfig[layoutType];
+
+    if(!storedLayout || !defaultLayout)
+      return;
+
+      const defaultLayoutElementsGrouped = _.groupBy(defaultLayout.lists, l => l.containerName);
+      const defaultLayoutElements = defaultLayout.lists.flatMap(column => column.items);
+      const storedLayoutElements = storedLayout.lists.flatMap(column => column.items);
+
+      const missingElementNames = defaultLayoutElements.map(le=>le.componentName).filter(elem => storedLayoutElements.map(le=>le.componentName).indexOf(elem) < 0);
+      
+      if(missingElementNames.length > 0)
+      {
+        missingElementNames.forEach(missingComponentName => {
+
+          //Now find the component somewhere in the default layout to get the correct container and position/index.
+          const containerName = _.findKey(defaultLayoutElementsGrouped, (lists, containerName) => {
+            return lists.find(l => l.containerName === containerName)?.items.find(i => i.componentName === missingComponentName) !== undefined;
+          });
+
+          const defaultElementsInContainer = defaultLayoutElementsGrouped[containerName][0].items;
+          let defaultElementIndex = defaultElementsInContainer.findIndex(e=> e.componentName === missingComponentName);
+          const element = defaultElementsInContainer[defaultElementIndex];
+
+          const storedLayoutItems = storedLayout.lists.find(l=>l.containerName === containerName).items;
+          
+          if(defaultElementIndex > storedLayoutItems.length)
+            defaultElementIndex = 0;  //Just place in top if index is not applicable.
+          
+          storedLayout.lists.find(l=>l.containerName === containerName).items.splice(defaultElementIndex, 0, element);
+        });        
+      }
   }
 
   drop(event: CdkDragDrop<LayoutElement[]>) {
