@@ -1,7 +1,7 @@
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, Component, EventEmitter, Inject, Injector, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import * as _ from 'lodash';
-import { BehaviorSubject, combineLatest, fromEvent, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, combineLatest, fromEvent } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 import { createGuid } from 'src/app/shared/functions/create-guid.fn';
 import { ComponentMap } from './model/component-map.interface';
@@ -233,7 +233,17 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   }
 
   private get currentLayout(): CustomizableLayout {
-    return this._layoutState.getValue()[this._layoutType];
+    const layout = this._layoutState.getValue()[this._layoutType];
+    //Respect that some components may be hidden
+    const filtered = layout.lists.map(l => ({
+      ...l,
+      items: l.items.filter(i => !this.componentMap[i.componentName]?.hidden ?? false),
+    }));
+
+    return {
+      cardMargin: layout.cardMargin,
+      lists: filtered,
+    };
   }
 
   private set currentLayout(newVal: CustomizableLayout) {
