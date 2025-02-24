@@ -5,6 +5,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
   templateUrl: './customizable-layout-menu.component.html',
   styleUrls: ['./customizable-layout-menu.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class CustomizableLayoutMenuComponent {
   @Output() removeColRightPressed = new EventEmitter<void>();

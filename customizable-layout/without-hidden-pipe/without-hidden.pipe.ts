@@ -4,9 +4,10 @@ import { LayoutElement } from '../model/layout-element.interface';
 
 @Pipe({
   name: 'withoutHidden',
+  standalone: false
 })
 export class WithoutHiddenPipe implements PipeTransform {
   transform(arr: LayoutElement[], componentMap: ComponentMap): LayoutElement[] {
-    return arr && componentMap ? arr.filter(v => !componentMap[v.componentName]?.hidden ?? false) : arr;
+    return arr && componentMap ? arr.filter(v => !componentMap[v.componentName]?.hidden) : arr;
   }
 }

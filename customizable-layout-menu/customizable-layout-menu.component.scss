@@ -1,26 +1,27 @@
-@import 'src/styles/variables';
+@use 'variables' as var;
+@use 'seges-colors' as color;
 
 div.actions {
   display: flex;
   align-items: center;
   button {
     .mat-icon {
-      color: $color-gray;
+      color: color.$color-gray; 
     }
     &.editing {
       .mat-icon {
-        color: $color-blue;
+        color: color.$color-blue;
       }
     }
     &:last-child {
-      margin: 0.5rem;
+      margin: var.$sm;
     }
   }
 }
 
 .tablet-n-up {
   display: none;
-  @media screen and (min-width: $tablet-width) {
+  @media screen and (min-width: var.$tablet-width) {
     display: block;
   }
 }

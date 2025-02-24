@@ -17,6 +17,7 @@ import { WINDOW_REF } from './model/window-ref.token';
   templateUrl: './customizable-layout.component.html',
   styleUrls: ['./customizable-layout.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   @Output() layoutChanged = new EventEmitter<CustomizableLayout>();
@@ -237,7 +238,7 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
     //Respect that some components may be hidden
     const filtered = layout.lists.map(l => ({
       ...l,
-      items: l.items.filter(i => !this.componentMap[i.componentName]?.hidden ?? false),
+      items: l.items.filter(i => !(this.componentMap[i.componentName]?.hidden || false)),
     }));
 
     return {
