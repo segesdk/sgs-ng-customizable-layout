@@ -1,9 +1,11 @@
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { CommonModule } from '@angular/common';
 import { createComponentFactory, Spectator } from '@ngneat/spectator';
 import { firstValueFrom } from 'rxjs';
-import { MockComponents } from 'ng-mocks';
 import { CustomizableLayoutComponent } from './customizable-layout.component';
 import { LayoutType } from './model/layout-type.enum';
 import { WINDOW_REF } from './model/window-ref.token';
+import { WithoutHiddenPipe } from './without-hidden-pipe/without-hidden.pipe';
 
 describe('CustomizableLayoutComponent', () => {
   let spectator: Spectator<CustomizableLayoutComponent>;
@@ -15,7 +17,8 @@ describe('CustomizableLayoutComponent', () => {
       }
     ],
     component: CustomizableLayoutComponent,
-    declarations: [MockComponents(CustomizableLayoutComponent)],
+    declarations: [WithoutHiddenPipe],
+    imports: [CommonModule, DragDropModule],
   });
 
   it('should create', () => {
