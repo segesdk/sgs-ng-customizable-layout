@@ -1,4 +1,5 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator';
+import { firstValueFrom } from 'rxjs';
 import { MockComponents } from 'ng-mocks';
 import { CustomizableLayoutComponent } from './customizable-layout.component';
 import { LayoutType } from './model/layout-type.enum';
@@ -32,5 +33,71 @@ describe('CustomizableLayoutComponent', () => {
     });
 
     expect(spectator.component).toBeTruthy();
+  });
+
+  it('falls back to mobile layout when tablet and desktop layouts are missing', async () => {
+    spyOnProperty(window, 'innerWidth', 'get').and.returnValue(1200);
+
+    spectator = createComponent({
+      props: {
+        defaultLayout: {
+          name: 'mobile-only',
+          version: 1,
+          [LayoutType.Mobile]: {
+            cardMargin: '1rem',
+            lists: [
+              {
+                containerName: 'mobile-col',
+                items: [],
+                width: '1fr',
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const layout = await firstValueFrom(spectator.component.layout$);
+
+    expect(layout.cardMargin).toBe('1rem');
+    expect(layout.lists[0].containerName).toBe('mobile-col');
+  });
+
+  it('uses the desktop layout when a desktop config is available', async () => {
+    spyOnProperty(window, 'innerWidth', 'get').and.returnValue(1200);
+
+    spectator = createComponent({
+      props: {
+        defaultLayout: {
+          name: 'desktop',
+          version: 1,
+          [LayoutType.Mobile]: {
+            cardMargin: '1rem',
+            lists: [
+              {
+                containerName: 'mobile-col',
+                items: [],
+                width: '1fr',
+              },
+            ],
+          },
+          [LayoutType.Desktop]: {
+            cardMargin: '2rem',
+            lists: [
+              {
+                containerName: 'desktop-col',
+                items: [],
+                width: '2fr',
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const layout = await firstValueFrom(spectator.component.layout$);
+
+    expect(layout.cardMargin).toBe('2rem');
+    expect(layout.lists[0].containerName).toBe('desktop-col');
   });
 });

@@ -47,14 +47,7 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
     .pipe(
       map((e: any) => e.target?.innerWidth),
       startWith(this.windowRef.innerWidth),
-      map(width => {
-        if (width <= this.tabletBreakpoint) {
-          return LayoutType.Mobile;
-        } else {
-          return LayoutType.Tablet;
-        }
-        // TODO: Support desktop layout, fallback to tablet, then mobile
-      }));
+      map(width => this.getLayoutType(width)));
       this.dragDelay$ = this.layoutType$.pipe(map(layout => {
         switch (layout) {
           case LayoutType.Mobile : {
@@ -87,8 +80,10 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   }
 
   initializeState() {
-    let storedLayout = JSON.parse(this.windowRef.localStorage.getItem(this.defaultLayout.name));
-    if (isCustomizableLayoutConfig(storedLayout) && this.defaultLayout.version <= storedLayout.version) {
+    const rawStoredLayout = this.windowRef.localStorage.getItem(this.defaultLayout.name);
+    const storedLayout = rawStoredLayout ? JSON.parse(rawStoredLayout) : null;
+
+    if (storedLayout && isCustomizableLayoutConfig(storedLayout) && this.defaultLayout.version <= storedLayout.version) {
       //Figure out if there are any new components in the default layout that needs to be added to the stored layout.
       this.addMissingComponentsToStoredLayout(storedLayout, this.defaultLayout, LayoutType.Mobile);
       this.addMissingComponentsToStoredLayout(storedLayout, this.defaultLayout, LayoutType.Tablet);
@@ -191,7 +186,10 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   }
 
   resetPressed() {
-    this.currentLayout = this.createCopy(this.getConnectedLists(this.defaultLayout[this._layoutType]));
+    const defaultLayout = this.getCurrentDefaultLayout();
+    if (defaultLayout) {
+      this.currentLayout = this.createCopy(this.getConnectedLists(defaultLayout));
+    }
   }
 
   cardTrackBy(index: number, name: LayoutElement): string {
@@ -230,11 +228,11 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   }
 
   private get currentColumns(): string {
-    return this.currentLayout.lists.map(l => l.width).reduce((cur, prev) => cur + ' ' + prev, '');
+    return this.currentLayout.lists.map(l => l.width).join(' ');
   }
 
   private get currentLayout(): CustomizableLayout {
-    const layout = this._layoutState.getValue()[this._layoutType];
+    const layout = this.getCurrentDefaultLayout();
     //Respect that some components may be hidden
     const filtered = layout.lists.map(l => ({
       ...l,
@@ -258,5 +256,30 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
 
   private createCopy(obj: any): any {
     return JSON.parse(JSON.stringify(obj));
+  }
+
+  private getLayoutType(width: number): LayoutType {
+    if (width > this.desktopBreakpoint && !!this.defaultLayout?.[LayoutType.Desktop]) {
+      return LayoutType.Desktop;
+    }
+
+    if (width > this.tabletBreakpoint && !!this.defaultLayout?.[LayoutType.Tablet]) {
+      return LayoutType.Tablet;
+    }
+
+    return LayoutType.Mobile;
+  }
+
+  private getCurrentDefaultLayout(): CustomizableLayout {
+    const layoutState = this._layoutState.getValue();
+    const layout = layoutState?.[this._layoutType]
+      ?? layoutState?.[LayoutType.Tablet]
+      ?? layoutState?.[LayoutType.Mobile];
+
+    if (!layout) {
+      throw new Error('No compatible layout configured.');
+    }
+
+    return layout;
   }
 }
