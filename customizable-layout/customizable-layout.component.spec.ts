@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { createComponentFactory, Spectator } from '@ngneat/spectator';
@@ -6,6 +7,12 @@ import { CustomizableLayoutComponent } from './customizable-layout.component';
 import { LayoutType } from './model/layout-type.enum';
 import { WINDOW_REF } from './model/window-ref.token';
 import { WithoutHiddenPipe } from './without-hidden-pipe/without-hidden.pipe';
+
+@Component({
+  template: '',
+  standalone: false,
+})
+class TestLayoutItemComponent {}
 
 describe('CustomizableLayoutComponent', () => {
   let spectator: Spectator<CustomizableLayoutComponent>;
@@ -107,6 +114,10 @@ describe('CustomizableLayoutComponent', () => {
   it('resets back to the default layout instead of keeping the stored layout', () => {
     spectator = createComponent({
       props: {
+        componentMap: {
+          DefaultComponent: { component: TestLayoutItemComponent },
+          CustomizedComponent: { component: TestLayoutItemComponent },
+        },
         defaultLayout: {
           name: 'reset-layout',
           version: 1,
