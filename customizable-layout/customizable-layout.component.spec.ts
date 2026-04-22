@@ -103,4 +103,46 @@ describe('CustomizableLayoutComponent', () => {
     expect(layout.cardMargin).toBe('2rem');
     expect(layout.lists[0].containerName).toBe('desktop-col');
   });
+
+  it('resets back to the default layout instead of keeping the stored layout', () => {
+    spectator = createComponent({
+      props: {
+        defaultLayout: {
+          name: 'reset-layout',
+          version: 1,
+          [LayoutType.Mobile]: {
+            cardMargin: '1rem',
+            lists: [
+              {
+                containerName: 'default-col',
+                items: [
+                  { componentName: 'DefaultComponent' },
+                ],
+                width: '1fr',
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    spectator.component['currentLayout'] = {
+      cardMargin: '2rem',
+      lists: [
+        {
+          containerName: 'customized-col',
+          items: [
+            { componentName: 'CustomizedComponent' },
+          ],
+          width: '2fr',
+        },
+      ],
+    };
+
+    spectator.component.resetPressed();
+
+    expect(spectator.component['currentLayout'].cardMargin).toBe('1rem');
+    expect(spectator.component['currentLayout'].lists[0].containerName).toBe('default-col');
+    expect(spectator.component['currentLayout'].lists[0].items[0].componentName).toBe('DefaultComponent');
+  });
 });

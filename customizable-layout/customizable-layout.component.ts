@@ -186,7 +186,7 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   }
 
   resetPressed() {
-    const defaultLayout = this.getCurrentDefaultLayout();
+    const defaultLayout = this.getCompatibleLayout(this.defaultLayout);
     if (defaultLayout) {
       this.currentLayout = this.createCopy(this.getConnectedLists(defaultLayout));
     }
@@ -232,7 +232,7 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
   }
 
   private get currentLayout(): CustomizableLayout {
-    const layout = this.getCurrentDefaultLayout();
+    const layout = this.getCompatibleLayout(this._layoutState.getValue());
     //Respect that some components may be hidden
     const filtered = layout.lists.map(l => ({
       ...l,
@@ -270,11 +270,10 @@ export class CustomizableLayoutComponent implements OnInit, OnDestroy {
     return LayoutType.Mobile;
   }
 
-  private getCurrentDefaultLayout(): CustomizableLayout {
-    const layoutState = this._layoutState.getValue();
-    const layout = layoutState?.[this._layoutType]
-      ?? layoutState?.[LayoutType.Tablet]
-      ?? layoutState?.[LayoutType.Mobile];
+  private getCompatibleLayout(layoutConfig: CustomizableLayoutConfig | null | undefined): CustomizableLayout {
+    const layout = layoutConfig?.[this._layoutType]
+      ?? layoutConfig?.[LayoutType.Tablet]
+      ?? layoutConfig?.[LayoutType.Mobile];
 
     if (!layout) {
       throw new Error('No compatible layout configured.');
